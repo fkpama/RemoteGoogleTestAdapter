@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+		<PropertyGroup>
+				<TargetFrameworks>net7.0;netstandard2.1;net472</TargetFrameworks>
+				<Nullable>enable</Nullable>
+		</PropertyGroup>
+
+		<ItemGroup>
+				<PackageReference Include="ELFSharp" Version="*" />
+				<PackageReference Include="CxxDemangler" Version="*" />
+				<!--<PackageReference Include="System.Runtime" Version="*" />-->
+				<!--<PackageReference Include="Sodiware.Core" Version="*" />-->
+		</ItemGroup>
+
+		<ItemGroup>
+				<Reference Include="liblinux.dll" Private="false">
+						<HintPath>$(DevEnvDir)\PrivateAssemblies\liblinux.dll</HintPath>
+				</Reference>
+				<ProjectReference Include="..\..\..\..\forks\TestAdapterForGoogleTest\GoogleTestAdapter\Core\Core.csproj" />
+				<ProjectReference Include="..\..\..\..\Rpc\src\Framework\src\Unix\Sodiware.Unix.DebugLibrary\Sodiware.Unix.DebugLibrary.csproj" />
+				<ProjectReference Include="..\..\..\RemoteCSharp\src\LinuxDebugger.Core\LinuxDebugger.Core.csproj" />
+		</ItemGroup>
+
+</Project>

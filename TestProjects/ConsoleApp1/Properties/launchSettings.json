@@ -1,0 +1,20 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "ConsoleApp1": {
+      "commandName": "Project"
+    },
+    "VS Launch": {
+      "commandName": "Executable",
+      "executablePath": "$(VSAPPIDDIR)\\devenv.exe",
+      "commandLineArgs": "$(MSBuildProjectDirectory)\\..\\TestProjects.sln",
+      "environmentVariables": {
+        "GTEST_OVERRIDE_SOURCE": "SimpleTestProject.out",
+        "GTEST_WAIT_FOR_DEBUGGER": "1"
+      }
+    }
+  }
+}

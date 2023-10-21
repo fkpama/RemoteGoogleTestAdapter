@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+		<PropertyGroup>
+				<OutputType>Exe</OutputType>
+				<TargetFramework>net472</TargetFramework>
+				<ImplicitUsings>enable</ImplicitUsings>
+				<Nullable>enable</Nullable>
+		</PropertyGroup>
+
+		<ItemGroup>
+				<ProjectReference Include="..\SimpleTestProject\SimpleTestProject.vcxproj">
+						<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+						<OutputItemType>None</OutputItemType>
+						<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+				</ProjectReference>
+				<Using Remove="System.Net.Http" />
+		</ItemGroup>
+
+		<ItemGroup>
+		  <None Update="Settings.runsettings">
+		    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  </None>
+		</ItemGroup>
+
+		<Target Name="BuildAdapter" AfterTargets="ResolveReferences" Condition="'$(DesignTimeBuild)'!='true'">
+				<Exec Command="dotnet build ..\..\src\RemoteGoogleTestAdapter\RemoteGoogleTestAdapter.csproj -p:&quot;TargetFramework=net472&quot; -p:SolutionDir=$(SolutionDir)" EnvironmentVariables="DevEnvDir=$(DevEnvDir);OutputPath=$(MSBuildProjectDirectory)\$(OutDir);AppendTargetFrameworkToOutputPath=false" />
+		</Target>
+
+</Project>
