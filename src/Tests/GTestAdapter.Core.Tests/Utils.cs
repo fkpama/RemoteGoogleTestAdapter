@@ -1,18 +1,28 @@
 ﻿using System.Globalization;
+using GoogleTestAdapter.TestCases;
 
 namespace GTestAdapter.Core.Tests
 {
     internal class Utils
     {
+        const string RunningMainFrom = "Running main() from";
         public static void TimestampMessage(ref string message)
         {
             string timestamp = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
             message = $"{timestamp} - {message ?? ""}";
         }
+
+        internal static IList<TestCaseDescriptor> Parse(string output)
+        {
+            var str = RemoveRunningMain(output).Split('\n');
+            var result = new ListTestsParser(string.Empty).ParseListTestsOutput(str);
+            return result;
+        }
+
         internal static string RemoveRunningMain(string testListOutput)
         {
             var lst = testListOutput.Trim();
-            if (lst.StartsWith("Running main() from"))
+            if (lst.StartsWith(RunningMainFrom))
             {
                 var idx = lst.IndexOf('\n');
                 lst = lst.Substring(idx + 1);

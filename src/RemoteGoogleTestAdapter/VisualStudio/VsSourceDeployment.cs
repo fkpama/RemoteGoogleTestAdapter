@@ -1,69 +1,108 @@
-﻿using System.Runtime.CompilerServices;
-using GTestAdapter.Core;
-using GTestAdapter.Core.Settings;
-using RemoteGoogleTestAdapter.IDE;
+﻿using GoogleTestAdapter.Model;
+using GoogleTestAdapter.Remote.Models;
+using GoogleTestAdapter.Remote.Remoting;
+using GoogleTestAdapter.Remote.Settings;
+using GoogleTestAdapter.Remote.Symbols;
 using Sodiware.Unix.DebugLibrary;
 
-namespace RemoteGoogleTestAdapter.VisualStudio
+namespace GoogleTestAdapter.Remote.Adapter.VisualStudio
 {
-    internal class VsSourceDeployment : ISourceDeployment
+    internal class VsSourceDeployment : SourceDeploymentBase
     {
         private readonly VsIde vsIde;
-        private readonly AdapterSettings settings;
-        private readonly ILogger<VsSourceDeployment> log;
+        private readonly ISshClientRegistry registry;
+        private readonly ILoggerFactory loggerFactory;
+        private SourceDeployment? fallback;
 
         public VsSourceDeployment(VsIde vsIde,
                                   AdapterSettings settings,
-                                  ILogger<VsSourceDeployment> log)
+                                  ISshClientRegistry registry,
+                                  ILogger log,
+                                  ILoggerFactory loggerFactory)
+            : base(settings, log)
         {
             this.vsIde = vsIde;
-            this.settings = settings;
-            this.log = log;
+            this.registry = registry;
+            this.loggerFactory = loggerFactory;
         }
 
-        public async Task<string[]> GetTestListOutputAsync(string filePath,
-                                                     ElfDebugBinary binary,
-                                                     CancellationToken cancellationToken)
+        public override async Task<TestListResult> GetTestListOutputAsync(string filePath,
+                                                           ElfDebugBinary binary,
+                                                           CancellationToken cancellationToken)
         {
             var project = this.vsIde
                 .GetProjectForOutputPath(filePath,
                                          this.settings.OverrideSource.IsPresent());
             if (project is not null)
             {
-                var output = await project
+                var (connectionId, output, targetPath) = await project
                     .GetListTestOutputAsync(cancellationToken)
                     .ConfigureAwait(false);
-                log.LogDebug("Test list output:\n{output}", output);
-                return output.Trim().Split(AdapterUtils.LineSeparatorChars,
+                log.DebugInfo($"Test list output:\n===\n{output}");
+                if (output.IsPresent())
+                {
+                    Assumes.NotNull(output);
+                    Assumes.NotNull(targetPath);
+                    var ar = output.Trim().Split(AdapterUtils.LineSeparatorChars,
                                            StringSplitOptions.RemoveEmptyEntries);
+                    return new(connectionId, targetPath, ar);
+                }
             }
-            return Array.Empty<string>();
+
+            this.fallback ??= new(this.settings,
+                                  this.registry,
+                                  this.log,
+                                  this.loggerFactory);
+            return await this.fallback.GetTestListOutputAsync(filePath,
+                                                        binary,
+                                                        cancellationToken);
         }
 
-        public bool IsGoogleTestBinary(string source,
-                                       [NotNullWhen(true)] out ElfDebugBinary? binary)
-        {
-            return ElfBinaryDiscoverer.IsGTestBinary(source, out binary);
-        }
+        //public async Task<string?> MapRemoteFileAsync(string deploymentFile,
+        //                                        string fullpath,
+        //                                        CancellationToken cancellation)
+        //{
+        //    //var project = this.vsIde
+        //    //    .GetProjectForOutputPath(deploymentFile,
+        //    //    this.settings.OverrideSource.IsPresent());
 
-        public async Task<string?> MapRemoteFileAsync(string deploymentFile,
-                                                string fullpath,
-                                                CancellationToken cancellation)
-        {
-            var project = this.vsIde
-                .GetProjectForOutputPath(deploymentFile,
-                this.settings.OverrideSource.IsPresent());
+        //    //if (project is null)
+        //    //{
+        //    //    return null;
+        //    //}
 
-            if (project is null)
+        //    //var mapping  = await project
+        //    //    .GetFileMappingAsync(fullpath, cancellation)
+        //    //    .ConfigureAwait(false);
+
+        //    //if (!mapping.HasValue || mapping.Value.Source.IsMissing())
+        //    //{
+        //        return this.settings.SourceMap?.CompilerToEditorPath(fullpath);
+        //    //}
+
+        //    //return mapping?.Source;
+        //}
+
+        public override string? GetOutputProjectName(string exe)
+        {
+            if (this.settings.OverrideSource.IsPresent())
             {
-                return null;
+                Assumes.NotNull(this.settings.OverrideSource);
+                exe = this.settings.OverrideSource;
+            }
+            var project = this.vsIde.GetProjectForOutputPath(exe);
+            return project?.UniqueName;
+        }
+
+        public override Task<string?> GetRemoteOutputAsync(TestCase testCase, CancellationToken cancellationToken)
+        {
+            var property = testCase.GetDeploymentProperty();
+            if (property is null)
+            {
+                return TaskResults.Null<string>();
             }
 
-            var mapping  = await project
-                .GetFileMappingAsync(fullpath, cancellation)
-                .ConfigureAwait(false);
-
-            return mapping?.Source;
+            return Task.FromResult(property.RemoteExePath);
         }
     }
 }

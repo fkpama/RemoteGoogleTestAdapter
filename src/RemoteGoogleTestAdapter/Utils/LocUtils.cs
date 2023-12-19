@@ -1,8 +1,7 @@
 ﻿using System.Globalization;
-using GoogleTestAdapter.Common;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 
-namespace RemoteGoogleTestAdapter.Utils
+namespace GoogleTestAdapter.Remote.Adapter.Utils
 {
     internal static class LocUtils
     {

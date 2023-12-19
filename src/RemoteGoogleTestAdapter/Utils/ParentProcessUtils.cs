@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace RemoteGoogleTestAdapter.Utils
+namespace GoogleTestAdapter.Remote.Adapter.Utils
 {
     /// <summary>
     /// A utility class to determine a process parent.

@@ -120,6 +120,16 @@
   <data name="ErrorMessage" xml:space="preserve">
     <value>ERROR: {0}</value>
   </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="GoogleTestAdapterSettings" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Assets\GoogleTestAdapterSettings.xsd;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="Invalid" xml:space="preserve">
+    <value>Invalid {0}</value>
+  </data>
+  <data name="RunSettingsLoadError" xml:space="preserve">
+    <value>Error loading RunSettings: {0}</value>
+  </data>
   <data name="TestDiscoveryCompleted" xml:space="preserve">
     <value>Test discovery completed, overall duration: {0}</value>
   </data>
@@ -127,7 +137,13 @@
     <value>Exception while discovering tests: {0}</value>
   </data>
   <data name="TestDiscoveryStarting" xml:space="preserve">
-    <value>Test Adapter for Remote Google Test: Test Discovery starting</value>
+    <value>Test Adapter for Remote Google Test: Test Discovery starting{0}.</value>
+  </data>
+  <data name="TestExecutionStarting" xml:space="preserve">
+    <value>Test execution starting.</value>
+  </data>
+  <data name="TraitIgnoreMessage" xml:space="preserve">
+    <value>Trait has same name as base test property and will thus be ignored for test case filtering: {0}</value>
   </data>
   <data name="UnknownLiteral" xml:space="preserve">
     <value>Unknown enum literal: {0}</value>

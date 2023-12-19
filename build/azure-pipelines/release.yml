@@ -1,0 +1,31 @@
+trigger:
+  branches:
+    include:
+      - master
+      - dev
+  paths:
+    include:
+      - src
+
+parameters:
+- name: PublishToMarketPlace
+  type: boolean
+  displayName: Publish to MarketPlace
+  default: false
+
+- name: Version
+  displayName: Version
+  default: '*'
+
+pool:
+  vmImage: windows-2022
+
+extends:
+  template: templates/release.template.yml
+  parameters:
+    ${{ if ne(parameters.Version, '*') }}:
+      Version: ${{ parameters.Version }}
+    ${{ if or(parameters.PublishToMarketPlace, eq(variables['Build.SourceBranchName'], 'master')) }}:
+      PublishToMarketPlace: true
+    ${{ else }}:
+      PublishToOpenVsixGallery: true

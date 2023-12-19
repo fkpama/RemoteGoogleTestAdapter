@@ -6,6 +6,8 @@ global using Microsoft.Extensions.Logging;
 global using ILogger = GoogleTestAdapter.Common.ILogger;
 global using Assumes = Sodiware.Assumes;
 global using LinuxDebugger.VisualStudio;
+global using VsTestCase = Microsoft.VisualStudio.TestPlatform.ObjectModel.TestCase;
+global using SysDebugger = System.Diagnostics.Debugger;
 
 global using IOleServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
 // see: https://learn.microsoft.com/en-us/visualstudio/extensibility/migration/breaking-api-list?view=vs-2022

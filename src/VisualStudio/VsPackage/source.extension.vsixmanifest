@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+    <Metadata>
+        <Identity Id="FKpama-RemoteGoogleTestAdapter.239A01C2-CEBD-468E-9327-13EA7D07E923" Version="0.0.1" Language="en-US" Publisher="Frederic Kpama" />
+        <DisplayName>Remote Google Test Adapter</DisplayName>
+        <Description xml:space="preserve">Empty VSIX Project.</Description>
+        <MoreInfo>https://github.com/fkpama/RemoteGoogleTestAdapter</MoreInfo>
+        <Tags>testing, build</Tags>
+    </Metadata>
+    <Installation AllUsers="true">
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">
+            <ProductArchitecture>amd64</ProductArchitecture>
+        </InstallationTarget>
+    </Installation>
+    <Dependencies>
+        <Dependency d:Source="Installed" Id="Microsoft.VisualStudio.Linux.VC.53CDC963-411A-4C4D-921C-DE3B5A78025F" DisplayName="Visual C++ for Linux Development" Version="[1.0,)" d:InstallSource="Download" />
+    </Dependencies>
+    <Assets>
+        <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%.Debugger" Path="|VsPackage.Debugger|" />
+        <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+        <Asset Type="UnitTestExtension" d:Source="Project" d:ProjectName="RemoteGoogleTestAdapter" Path="|RemoteGoogleTestAdapter|" />
+    </Assets>
+    <Prerequisites>
+        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,18.0)" DisplayName="Visual Studio core editor" />
+    </Prerequisites>
+</PackageManifest>

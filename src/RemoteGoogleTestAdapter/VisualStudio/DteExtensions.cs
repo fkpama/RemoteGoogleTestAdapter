@@ -1,7 +1,9 @@
-﻿using EnvDTE;
+﻿using System.Runtime.InteropServices;
+using EnvDTE;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 
-namespace RemoteGoogleTestAdapter.VisualStudio
+namespace GoogleTestAdapter.Remote.Adapter.VisualStudio
 {
     internal static class DteExtensions
     {
@@ -18,15 +20,32 @@ namespace RemoteGoogleTestAdapter.VisualStudio
         }
         internal static string? GetTargetPath(this Project project, ILogger logger)
         {
+            const int maxRetry = 5;
+            string? targetPath = null;
             try
             {
-                return doGetTargetPath(project);
+                for (int tryCount = 0; tryCount < maxRetry; tryCount++)
+                {
+                    try
+                    {
+                        targetPath = doGetTargetPath(project);
+                        break;
+                    }
+                    catch (COMException ex)
+                    when (ex.HResult == VSConstants.RPC_E_SERVERCALL_RETRYLATER
+                    && tryCount < (maxRetry - 1))
+                    {
+                        System.Threading.Thread.Sleep(1000);
+                    }
+                }
             }
             catch (Exception ex)
             {
                 logger.LogError($"Error while getting target path of project {project.Name}: {ex.Message}");
                 return null;
             }
+
+            return targetPath;
         }
         static string? doGetTargetPath(this Project project)
         {

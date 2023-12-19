@@ -1,11 +1,10 @@
-﻿using GoogleTestAdapter.DiaResolver;
-using GTestAdapter.Core.Models;
+﻿using GTestAdapter.Core.Models;
 
-namespace GTestAdapter.Core.Binary
+namespace GoogleTestAdapter.Remote.Symbols
 {
     public interface ITestLocationResolver
     {
-        Task<SourceFileLocation?> ResolveAsync(TestMethodDescriptor descriptor,
+        Task<TestCaseLocation?> ResolveAsync(TestMethodDescriptor descriptor,
                                                CancellationToken cancellation);
     }
 }

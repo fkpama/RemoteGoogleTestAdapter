@@ -1,0 +1,12 @@
+<Project>
+	<!--
+	<Target Name="BuildAdapter" BeforeTargets="PrepareForBuild"
+		Condition="'$(DesignTimeBuild)'!='true' And '$(MSBuildProjectExtension)'=='.vcxproj' AND '$(GTEST_BUILD_ADAPTER)'!=''">
+		<Exec Command="dotnet build ..\..\src\RemoteGoogleTestAdapter\RemoteGoogleTestAdapter.csproj /t:Build -p:&quot;TargetFramework=net472&quot; -p:SolutionDir=$(SolutionDir) -nodeReuse:false -p:OutputPath=$(OutDir) -p:DefaultItemExcludes=obj\**\*" EnvironmentVariables="DevEnvDir=$(DevEnvDir);AppendTargetFrameworkToOutputPath=false;AllowUnsafeBlocks=true;LIB=" />
+		<ItemGroup>
+		<_PdbToRemove Include="$(OutDir)\**\*.pdb" />
+		</ItemGroup>
+		
+	</Target>
+	-->
+</Project>

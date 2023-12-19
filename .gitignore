@@ -365,3 +365,6 @@ FodyWeavers.xsd
 /testEnvironments.json
 
 Keys/
+
+/LocalProjects.targets
+/src/RemoteGoogleTestAdapter/Properties/launchSettings.json

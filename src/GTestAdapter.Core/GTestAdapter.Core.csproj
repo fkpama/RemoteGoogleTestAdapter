@@ -2,6 +2,7 @@
 
 		<PropertyGroup>
 				<TargetFrameworks>net7.0;netstandard2.1;net472</TargetFrameworks>
+				<RootNamespace>GoogleTestAdapter.Remote</RootNamespace>
 				<Nullable>enable</Nullable>
 		</PropertyGroup>
 
@@ -10,15 +11,23 @@
 				<PackageReference Include="CxxDemangler" Version="*" />
 				<!--<PackageReference Include="System.Runtime" Version="*" />-->
 				<!--<PackageReference Include="Sodiware.Core" Version="*" />-->
+				<!--<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />-->
+				<!--<PackageReference Include="Microsoft.Extensions.Primitives" Version="6.*" />-->
+		</ItemGroup>
+
+		<ItemGroup Condition="'$(Configuration)'=='Debug'">
+				<InternalsVisibleTo Include="GTestAdapter.Core.Tests" />
 		</ItemGroup>
 
 		<ItemGroup>
 				<Reference Include="liblinux.dll" Private="false">
 						<HintPath>$(DevEnvDir)\PrivateAssemblies\liblinux.dll</HintPath>
 				</Reference>
-				<ProjectReference Include="..\..\..\..\forks\TestAdapterForGoogleTest\GoogleTestAdapter\Core\Core.csproj" />
-				<ProjectReference Include="..\..\..\..\Rpc\src\Framework\src\Unix\Sodiware.Unix.DebugLibrary\Sodiware.Unix.DebugLibrary.csproj" />
-				<ProjectReference Include="..\..\..\RemoteCSharp\src\LinuxDebugger.Core\LinuxDebugger.Core.csproj" />
+				<PackageReference Include="Sodiware.Unix.DebugLibrary" Version="*" />
+				<PackageReference Include="Sodiware.VisualStudio.Unix.Core" Version="*"/>
+
+				<ProjectReference Include="..\GTestAdapter.Common\GTestAdapter.Common.csproj" />
+				<ProjectReference Include="..\..\third-party\GoogleTestAdapter\GoogleTestAdapter\Core\Core.csproj" />
 		</ItemGroup>
 
 </Project>

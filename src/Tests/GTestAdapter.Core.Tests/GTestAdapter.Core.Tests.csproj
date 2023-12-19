@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 		<PropertyGroup>
 				<TargetFramework>net472</TargetFramework>
@@ -9,22 +9,28 @@
 
 				<IsPackable>false</IsPackable>
 				<IsTestProject>true</IsTestProject>
+
+				<!--<SignAssembly>true</SignAssembly>-->
 		</PropertyGroup>
 
 		<ItemGroup>
-				<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
-				<PackageReference Include="Moq" Version="4.20.69" />
-				<PackageReference Include="NUnit" Version="3.13.3" />
-				<PackageReference Include="NUnit3TestAdapter" Version="4.4.2" />
-				<PackageReference Include="NUnit.Analyzers" Version="3.6.1" />
-				<PackageReference Include="coverlet.collector" Version="3.2.0" />
+				<PackageReference Include="Microsoft.NET.Test.Sdk" Version="*" />
+				<PackageReference Include="Moq" Version="*" />
+				<PackageReference Include="NUnit" Version="*" />
+				<PackageReference Include="NUnit3TestAdapter" Version="*" />
+				<PackageReference Include="NUnit.Analyzers" Version="*" />
+				<PackageReference Include="coverlet.collector" Version="*" />
 				<PackageReference Include="FluentAssertions" Version="*" />
+				<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.*" />
+
+				<Reference Include="System.ServiceModel" />
 		</ItemGroup>
 
 		<ItemGroup>
 				<ProjectReference Include="..\..\..\..\..\Rpc\src\Framework\src\Unix\Tests\DebugLibrary.Utils\DebugLibrary.Utils.csproj" />
 				<ProjectReference Include="..\..\GTestAdapter.Core\GTestAdapter.Core.csproj" />
 				<ProjectReference Include="..\..\RemoteGoogleTestAdapter\RemoteGoogleTestAdapter.csproj" />
+				<!--<ProjectReference Include="..\..\VisualStudio\VsPackage.Debugger\VsPackage.Debugger.csproj" />-->
 		</ItemGroup>
 
 </Project>

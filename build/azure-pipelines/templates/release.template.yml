@@ -1,0 +1,141 @@
+resources:
+ repositories:
+   - repository: BuildTools
+     type: git
+     name: Framework/BuildTools
+     ref: dev
+
+parameters:
+  - name: PublishToMarketPlace
+    type: boolean
+    default: false
+
+  - name: PublishToOpenVsixGallery
+    type: boolean
+    default: false
+  
+  - name: Version
+    type: string
+    default:
+
+variables:
+  - group: VS_MarketPlace
+
+  - name: SourcesDirectory
+    readonly: true
+    value: $(Build.SourcesDirectory)\RemoteGoogleTestAdapter\
+
+  - name: BuildToolsScriptDir
+    readonly: true
+    value: $(Build.SourcesDirectory)/BuildTools/Scripts/
+
+  - name: NetCoreProjects
+    value: |
+      $(SourcesDirectory)src\RemoteGoogleTestAdapter\*.csproj
+      $(SourcesDirectory)src\VisualStudio\VsPackage.Debugger\*.csproj
+
+  - name: VsPackage.ProjectDirectory
+    value: $(SourcesDirectory)src\VisualStudio\VsPackage
+  
+  - name: VsPackage.ProjectPath
+    value: $(VsPackage.ProjectDirectory)\VsPackage.csproj
+
+  - name: VsPackage.SourceManifest
+    value: $(VsPackage.ProjectDirectory)\source.extension.vsixmanifest
+
+  - name: BuildConfiguration
+    readonly: true
+    value: Release
+
+  - name: CodeSigningKey
+    readonly: true
+    value: CodeSigning.snk
+
+  - name: Vsix.Categories
+    readonly: true
+    value: "'Build', 'Testing'"
+
+  - name: TagPrefix
+    readonly: true
+    value: v
+
+steps:
+
+- checkout: BuildTools
+
+- checkout: self
+  persistCredentials: true
+  fetchDepth: 0
+  fetchTags: true
+  submodules: recursive
+  clean: true
+
+- task: DownloadSecureFile@1
+  displayName: Download Key
+  inputs:
+    secureFile: $(CodeSigningKey)
+
+- template: Pipelines/vsix-incrementversion-template.yml@BuildTools
+  parameters:
+    SourceManifest: $(VsPackage.ProjectDirectory)\source.extension.vsixmanifest
+    Version: ${{ parameters.Version }}
+
+- task: PowerShell@2
+  displayName: Prepare Build Environment
+  inputs:
+    workingDirectory: $(SourcesDirectory)
+    targetType: inline
+    script: |
+      Import-Module $(BuildToolsScriptDir)Modules/VSUtils-Module.ps1
+
+      $buildToolsVersion = Get-VSSDKBuildToolsVersion
+      Write-Output "##vso[task.setvariable variable=VSSDKBuildToolsVersion;]$buildToolsVersion"
+
+      echo "##[command]New-Item -ItemType Directory -Force $(SourcesDirectory)Keys"
+      New-Item -ItemType Directory -Force "$(SourcesDirectory)Keys" | Out-Null
+
+      echo "##[command]copy '$(Agent.TempDirectory)\$(CodeSigningKey)' '$(SourcesDirectory)Keys\key_$(BuildConfiguration).snk'"
+      Copy-Item -Path "$(Agent.TempDirectory)\$(CodeSigningKey)" -Destination "$(SourcesDirectory)Keys\key_$(BuildConfiguration).snk" | Out-Null
+
+      New-PipelineVariable SigningKeyFile "$(SourcesDirectory)Keys\key_$(BuildConfiguration).snk"
+
+      echo "Removing $(SourcesDirectory)third-party\GoogleTestAdapter\Nuget.config"
+      Remove-Item $(SourcesDirectory)third-party\GoogleTestAdapter\Nuget.config
+
+      echo "Initializing visual studio Environment"
+      &"$(BuildToolsScriptDir)/Setup-VisualStudio.ps1"
+
+      echo "Preparing build environment"
+      &'$(SourcesDirectory)build\prepare_for_build.ps1'
+
+      New-PipelineVariable SolutionDir "$(SourcesDirectory)\"
+
+      exit 0
+
+- ${{ if eq(variables['Build.Reason'], 'Build.Reason') }}:
+  - template: Pipelines/github-update-pr-status.yml@BuildTools
+
+- template: Pipelines/vsix-publish-template.yml@BuildTools
+  parameters:
+    BuildToolsDirectory: $(Build.SourcesDirectory)/BuildTools
+    BuildConfiguration: $(BuildConfiguration)
+    #SourcesDirectory: $(SourcesDirectory)
+    Vsix.ProjectPath: $(VsPackage.ProjectPath)
+    netCoreProjects: $(NetCoreProjects)
+    Vsix.SigningKeyFile: $(SigningKeyFile)
+    PublishToMarketPlace: ${{ parameters.PublishToMarketplace }}
+    PublishToOpenVsixGallery: ${{ parameters.PublishToOpenVsixGallery }}
+    MarketPlace.AccessToken: $(VS_MarketPlace.AccessToken)
+    MarketPlace.Publisher: $(VS_MarketPlace.Publisher)
+    MarketPlace.Overview: "$(VsPackage.ProjectDirectory)/overview.md"
+    MarketPlace.AdditionalCommandLine:
+    MarketPlace.Categories:
+      testing
+
+- template: Pipelines/vsix-updatebuildname-template.yml@BuildTools
+  parameters:
+   PublishCheckVarName: Vsix.Published
+   #SourcesDirectory: $(SourcesDirectory)
+   PublishedToMarketPlace: ${{ parameters.PublishToMarketplace }}
+   PublishedToOpenVsixGallery: ${{ parameters.PublishToOpenVsixGallery }}
+   TagBuild: true

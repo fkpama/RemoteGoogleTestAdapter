@@ -1,18 +1,19 @@
 ﻿using EnvDTE;
+using GoogleTestAdapter.Remote.Remoting;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell.Interop;
 using Newtonsoft.Json.Linq;
 using Sodiware.IO;
 
-namespace RemoteGoogleTestAdapter.IDE
+namespace GoogleTestAdapter.Remote.Adapter.VisualStudio
 {
-    internal sealed class VsProject
+    internal sealed class VsProject : ISshClientConnection
     {
         private readonly VsIde ide;
         private readonly Project project;
         readonly Lazy<IVsBuildPropertyStorage> propertyStorage;
         readonly Lazy<string> configName, projectDir;
-        readonly Lazy<string?> intDir, remoteProjectDirFile;
+        readonly Lazy<string?> intDir;
         readonly Lazy<int> connectionId;
         IVsSshClient? sshClient;
 
@@ -34,6 +35,14 @@ namespace RemoteGoogleTestAdapter.IDE
             }
         }
 
+        public string UniqueName
+        {
+            get
+            {
+                return this.project.UniqueName;
+            }
+        }
+
         internal VsProject(VsIde ide, Project project)
         {
             this.ide = ide;
@@ -51,22 +60,23 @@ namespace RemoteGoogleTestAdapter.IDE
             });
             this.projectDir = new(() => Path.GetDirectoryName(this.project.FileName));
             this.intDir = new(() => GetPathPropertyValue("IntDir"));
-            this.connectionId = new(() => GetBuildConnectionConfig());
-            this.remoteProjectDirFile = new(() => GetPropertyValue("RemoteProjectDirFile"));
+            this.connectionId = new(GetBuildConnectionConfig);
+            //this.remoteProjectDirFile = new(() => GetPropertyValue("RemoteProjectDirFile"));
         }
 
-        internal async Task<IVsSshClient> GetSshClientAsync(CancellationToken cancellationToken = default)
+        public async Task<ISshClient> GetClientAsync(CancellationToken cancellationToken = default)
         {
             if (this.sshClient is not null)
             {
                 return this.sshClient;
             }
             var id = this.connectionId.Value;
-            return this.sshClient = (id > 0
+            this.sshClient = (id > 0
                 ? await this.ide.GetSshClientAsync(id, cancellationToken)
                 .ConfigureAwait(false)
                 : await this.ide.GetSshClientAsync(cancellationToken)
                 .ConfigureAwait(false));
+            return this.sshClient;
         }
 
         private string? GetPropertyValue(string name,
@@ -95,9 +105,9 @@ namespace RemoteGoogleTestAdapter.IDE
 
         private int GetBuildConnectionConfig()
         {
-            var remoteOutDir = GetPathPropertyValue("RemoteOutDir");
-            var targetPath = GetPathPropertyValue("TargetPath");
-            var outDir = GetPathPropertyValue("OutDir");
+            //var remoteOutDir = GetPathPropertyValue("RemoteOutDir");
+            //var targetPath = GetPathPropertyValue("TargetPath");
+            //var outDir = GetPathPropertyValue("OutDir");
             var lastRemoteTargetFile = GetPropertyValue("LastRemoteTargetFile");
             int connectionId = -1;
             if (lastRemoteTargetFile.IsPresent() && File.Exists(lastRemoteTargetFile))
@@ -172,22 +182,22 @@ namespace RemoteGoogleTestAdapter.IDE
             return false;
         }
 
-        internal async Task<string> GetListTestOutputAsync(CancellationToken cancellationToken = default)
+        internal async Task<(int ConnectionId, string? Output, string? TargetPath)> GetListTestOutputAsync(CancellationToken cancellationToken = default)
         {
             var remoteTargetPath = GetPropertyValue("RemoteTargetPath");
             if (remoteTargetPath.IsMissing())
             {
-                return string.Empty;
+                return (0, string.Empty, null);
             }
             Assumes.NotNull(remoteTargetPath);
-            var sshClient = await this.GetSshClientAsync(cancellationToken)
+            var sshClient = await this.GetClientAsync(cancellationToken)
                 .ConfigureAwait(false);
             var output = await sshClient.RunCommandAsync(remoteTargetPath,
-                                            GoogleTestAdapter.GoogleTestConstants.ListTestsOption,
-                                            cancellationToken)
+                                                         GoogleTestConstants.ListTestsOption,
+                                                         cancellationToken)
                 .ConfigureAwait(false);
 
-            return output;
+            return (sshClient.ConnectionId, output, remoteTargetPath);
         }
 
         internal async Task<SimplePathMapping?> GetFileMappingAsync(string fullPath, CancellationToken cancellationToken)
@@ -220,12 +230,9 @@ namespace RemoteGoogleTestAdapter.IDE
                         continue;
                     }
 
-                    if (client is null)
-                    {
-                        client = await this
-                            .GetSshClientAsync(cancellationToken)
+                    client ??= await this
+                            .GetClientAsync(cancellationToken)
                             .ConfigureAwait(false);
-                    }
                     var localFilename = items[0];
                     var copiedDate = items[1];
                     var remoteDir = items[2];
@@ -249,21 +256,5 @@ namespace RemoteGoogleTestAdapter.IDE
             }
             return list.ToArray();
         }
-
-        //internal bool TryGetMapping(string fullpath, [NotNullWhen(true)]out SimplePathMapping? mapping)
-        //{
-        //    var mappings = this.GetFileMapping();
-        //    foreach(var current in mappings)
-        //    {
-        //        if (PathUtils.IsSamePath(current.Target, fullpath))
-        //        {
-        //            mapping = current;
-        //            return true;
-        //        }
-        //    }
-
-        //    mapping = null;
-        //    return false;
-        //}
     }
 }
