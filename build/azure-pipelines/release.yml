@@ -1,0 +1,19 @@
+trigger:
+  branches:
+    include:
+      - master
+      - dev
+  paths:
+    include:
+      - src
+
+pool:
+  vmImage: windows-2022
+
+extends:
+  template: templates/release.template.yml
+  parameters:
+    ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+      PublishToMarketPlace: true
+    ${{ else }}:
+      PublishToOpenVsixGallery: true

@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+		<PropertyGroup>
+				<TargetFrameworks>net472;netstandard2.1</TargetFrameworks>
+				<ImplicitUsings>enable</ImplicitUsings>
+				<RootNamespace>GoogleTestAdapter.Remote</RootNamespace>
+				<AssemblyName>$(RootNamespace).Common</AssemblyName>
+				<Nullable>enable</Nullable>
+				<SignAssembly>true</SignAssembly>
+		</PropertyGroup>
+
+		<ItemGroup>
+				<Using Remove="System.Net.Http" />
+		</ItemGroup>
+
+		<ItemGroup>
+				<PackageReference Include="Newtonsoft.Json" Version="*" />
+				<PackageReference Include="Sodiware.Core" Version="*" />
+
+				<PackageReference Condition="$(TargetFramework.StartsWith('netstandard'))"
+													Include="System.ServiceModel.Primitives"
+													Version="4.*" />
+
+				<Reference Condition="$(TargetFramework.StartsWith('net4'))" Include="System.ServiceModel" />
+		</ItemGroup>
+
+		<ItemGroup>
+				<!--<ProjectReference Include="..\third-party\TestAdapterForGoogleTest\GoogleTestAdapter\Common\Common.csproj" />-->
+				<ProjectReference Include="..\..\third-party\GoogleTestAdapter\GoogleTestAdapter\Common\Common.csproj" />
+		</ItemGroup>
+</Project>

@@ -4,10 +4,16 @@
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<!-- Referenced assembly <Asm> does not have a strong name -->
+		<WarningsAsErrors>CS8002;$(WarningsAsErrors)</WarningsAsErrors>
 	</PropertyGroup>
-
+	<PropertyGroup>
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>full</DebugType>
+		<IncludeDebugSymbolsInVSIXContainer Condition="'$(TF_BUILD)'!=''">true</IncludeDebugSymbolsInVSIXContainer>
+	</PropertyGroup>
 	<ItemGroup>
-		<Using Include="System.Diagnostics.CodeAnalysis" />
-		<Using Include="System.Diagnostics" />
+		<Using Include="System.Diagnostics.CodeAnalysis"/>
+		<Using Include="System.Diagnostics"/>
 	</ItemGroup>
 </Project>

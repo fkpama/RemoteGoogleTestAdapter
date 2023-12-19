@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+		<PropertyGroup>
+				<TargetFramework>net472</TargetFramework>
+				<ImplicitUsings>enable</ImplicitUsings>
+				<RootNamespace>GoogleTestAdapter.Remote.VsPackage.Debugger</RootNamespace>
+				<Nullable>enable</Nullable>
+				<SignAssembly>true</SignAssembly>
+		</PropertyGroup>
+
+		<ItemGroup>
+				<PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.*" />
+				<PackageReference Include="Sodiware.VisualStudio.Unix" Version="*" />
+				<Reference Include="Microsoft.VisualStudio.ProjectSystem">
+				  <HintPath>$(DevEnvDir)\CommonExtensions\Microsoft\Project\Microsoft.VisualStudio.ProjectSystem.dll</HintPath>
+				</Reference>
+				<Reference Include="Microsoft.VisualStudio.ProjectSystem.VS" Private="false">
+				  <HintPath>$(DevEnvDir)\CommonExtensions\Microsoft\Project\Microsoft.VisualStudio.ProjectSystem.VS.dll</HintPath>
+				</Reference>
+				<Reference Include="System.ServiceModel" />
+				<Reference Include="Microsoft.VisualStudio.TestWindow.Interfaces" Private="false">
+						<HintPath>$(DevEnvDir)\CommonExtensions\Microsoft\VBCSharp\SourceBasedTestDiscovery\Microsoft.VisualStudio.TestWindow.Interfaces.dll</HintPath>
+				</Reference>
+		</ItemGroup>
+
+		<ItemGroup>
+				<ProjectReference Include="..\..\GTestAdapter.Common\GTestAdapter.Common.csproj" />
+		</ItemGroup>
+
+		<ItemGroup Condition="'$(Configuration)'=='Debug'">
+				<InternalsVisibleTo Include="GTestAdapter.Core.Tests, PublicKey=0024000004800000940000000602000000240000525341310004000001000100e1da21c4c1a2d6f5d8109f8078a07a9c6ec0e2b7c055e26b9ea662c73b889ba3b9c730a78e88029db74144b884d34f706e8fa1b80f0cf10d33e28e20b0a21edbcacd66f941d9a3a7da93715dc042395d8211e946b5eea4c91ee2c85370ac805201e8ed0afe6e03833a771f943afcb1b2d9f160e82614c6cb5824c831719bb1b7" />
+				<InternalsVisibleTo Include="DynamicProxyGenAssembly2, PublicKey=0024000004800000940000000602000000240000525341310004000001000100c547cac37abd99c8db225ef2f6c8a3602f3b3606cc9891605d02baa56104f4cfc0734aa39b93bf7852f7d9266654753cc297e7d2edfe0bac1cdcf9f717241550e0a7b191195b7667bb4f64bcb8e2121380fd1d9d46ad2d92d2d15605093924cceaf74c4861eff62abf69b9291ed0a340e113be11e6a7d3113e92484cf7045cc7" />
+		</ItemGroup>
+		
+
+		<ItemGroup>
+				<Compile Update="Resources.Designer.cs">
+						<DesignTime>True</DesignTime>
+						<AutoGen>True</AutoGen>
+						<DependentUpon>Resources.resx</DependentUpon>
+				</Compile>
+		</ItemGroup>
+
+		<ItemGroup>
+				<EmbeddedResource Update="Resources.resx">
+						<Generator>ResXFileCodeGenerator</Generator>
+						<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+				</EmbeddedResource>
+		</ItemGroup>
+
+
+</Project>

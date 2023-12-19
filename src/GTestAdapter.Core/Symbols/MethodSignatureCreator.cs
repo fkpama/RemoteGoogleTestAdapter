@@ -1,30 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GoogleTestAdapter;
-using GoogleTestAdapter.Helpers;
+﻿using GoogleTestAdapter.Helpers;
 
-namespace GTestAdapter.Core.Binary
+namespace GoogleTestAdapter.Remote.Symbols
 {
     internal class MethodSignatureCreator
     {
 
         internal IEnumerable<string> GetTestMethodSignatures(TestCaseDescriptor descriptor)
+            => descriptor.TestType switch
         {
-            switch (descriptor.TestType)
-            {
-                case TestCaseDescriptor.TestTypes.TypeParameterized:
-                    return GetTypedTestMethodSignatures(descriptor);
-                case TestCaseDescriptor.TestTypes.Parameterized:
-                    return GetParameterizedTestMethodSignature(descriptor).Yield();
-                case TestCaseDescriptor.TestTypes.Simple:
-                    return GetTestMethodSignature(descriptor.Suite, descriptor.Name).Yield();
-                default:
-                    throw new UnreachableException();
-            }
-        }
+            TestCaseDescriptor.TestTypes.TypeParameterized => GetTypedTestMethodSignatures(descriptor),
+            TestCaseDescriptor.TestTypes.Parameterized => GetParameterizedTestMethodSignature(descriptor).Yield(),
+            TestCaseDescriptor.TestTypes.Simple => GetTestMethodSignature(descriptor.Suite, descriptor.Name).Yield(),
+            _ => throw new UnreachableException(),
+        };
 
         private IEnumerable<string> GetTypedTestMethodSignatures(TestCaseDescriptor descriptor)
         {

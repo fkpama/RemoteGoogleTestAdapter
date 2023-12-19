@@ -1,0 +1,3 @@
+[submodule "third-party/GoogleTestAdapter"]
+	path = third-party/GoogleTestAdapter
+	url = https://github.com/microsoft/TestAdapterForGoogleTest.git

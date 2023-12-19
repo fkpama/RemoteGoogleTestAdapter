@@ -1,30 +1,33 @@
-﻿using System.Collections;
+﻿using System.Reflection;
 using EnvDTE;
+using GoogleTestAdapter.Remote.Debugger;
+using GoogleTestAdapter.Remote.Remoting;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
-using RemoteGoogleTestAdapter.VisualStudio;
 using Sodiware.IO;
 
-namespace RemoteGoogleTestAdapter.IDE
+namespace GoogleTestAdapter.Remote.Adapter.VisualStudio
 {
 
     public sealed class VsIde
     {
         private static JoinableTaskFactory? s_joinableTaskFactory;
+        private static VsIde? s_instance;
         private readonly Dictionary<string, VsProject> projects = new();
         private readonly DTE dte;
+        private readonly ISshClientRegistry registry;
         private readonly ILogger logger;
         private readonly ServiceProvider serviceProvider;
 
-
-        public VsIde(DTE ide, ILogger logger)
+        static VsIde()
         {
-            this.dte = ide;
-            this.logger = logger;
-            this.serviceProvider = new ServiceProvider(ide as IOleServiceProvider);
+            CommonVSUtils.RegisterAssemblyLoad();
         }
+
+
+        #region Properties
 
         public static JoinableTaskFactory JoinableTaskFactory
         {
@@ -32,30 +35,50 @@ namespace RemoteGoogleTestAdapter.IDE
             {
                 if (s_joinableTaskFactory is null)
                 {
-                    JoinableTaskFactory? taskFactory;
-                    try
-                    {
-                        taskFactory = ThreadHelper.JoinableTaskFactory;
-                    }
-                    catch
-                    {
-#pragma warning disable VSSDK005 // Avoid instantiating JoinableTaskContext
-                        var context = new JoinableTaskContext();
-#pragma warning restore VSSDK005 // Avoid instantiating JoinableTaskContext
-                        taskFactory = new JoinableTaskFactory(context);
-                    }
-                    s_joinableTaskFactory = taskFactory;
+                    //JoinableTaskFactory? taskFactory;
+                    //try
+                    //{
+                    //    taskFactory = ThreadHelper.JoinableTaskFactory;
+                    //    s_joinableTaskFactory = taskFactory;
+                    //}
+                    //catch
+                    //{
+                    CreateLocalTaskFactory();
+                    //}
                 }
                 return s_joinableTaskFactory;
             }
         }
 
-        internal static bool TryGetInstance(int id, ILogger logger, out VsIde? vsIde)
+        #endregion Properties
+
+        public VsIde(DTE ide, ISshClientRegistry registry, ILogger logger)
+        {
+            this.dte = ide;
+            this.registry = registry;
+            this.logger = logger;
+            this.serviceProvider = new ServiceProvider(ide as IOleServiceProvider);
+        }
+
+
+
+        internal static void SetCurrentInstance(VsIde vsIde)
+        {
+            s_instance = vsIde;
+        }
+        internal static VsIde? GetInstance()
+        {
+            return s_instance;
+        }
+        internal static bool TryGetInstance(int id,
+                                            ISshClientRegistry registry,
+                                            ILogger logger,
+                                            out VsIde? vsIde)
         {
             try
             {
-                vsIde = VSAutomation.GetIDEInstance(id, logger);
-                return true;
+                vsIde = VSAutomation.GetIDEInstance(id, registry, logger);
+                return vsIde is not null;
             }
             catch (Exception ex)
             {
@@ -67,7 +90,7 @@ namespace RemoteGoogleTestAdapter.IDE
 
         internal VsProject? GetProjectForOutputPath(string filePath, bool filenameOnly = true)
         {
-            filePath = normalize(filePath);
+            filePath = GUtils.NormalizePath(filePath);
             if (this.projects.TryGetValue(filePath, out var vsProject))
             {
                 return vsProject;
@@ -88,8 +111,8 @@ namespace RemoteGoogleTestAdapter.IDE
                     continue;
                 }
 
-                string? targetPath;
                 var name = project.Name;
+                string? targetPath;
                 try
                 {
                     targetPath = project.GetTargetPath(this.logger);
@@ -123,17 +146,13 @@ namespace RemoteGoogleTestAdapter.IDE
 
                 if (vsProject is not null)
                 {
+                    this.registry.Register(filePath, vsProject);
                     this.projects.Add(filePath, vsProject);
                     return vsProject;
                 }
             }
 
             return null;
-        }
-
-        private static string normalize(string filePath)
-        {
-            return Path.GetFullPath(filePath).ToUpperInvariant();
         }
 
         internal Task<IVsSshClient> GetSshClientAsync(int connectionId, CancellationToken cancellationToken)
@@ -152,16 +171,58 @@ namespace RemoteGoogleTestAdapter.IDE
             return Task.FromResult(cli);
         }
 
+        internal T? LaunchCommand<T>(int commandId, string commandArgs, TimeSpan? timeout = null)
+            => LaunchCommand<T>(GrtaDebuggerCommands.CommandSet, commandId, commandArgs, timeout);
+        internal T? LaunchCommand<T>(Guid commandSetId, int commandId, string commandArgs, TimeSpan? timeout = null)
+        {
+            object? args1 = commandArgs;
+            object? args2 = null;
+            var guid = commandSetId.ToString("D");
+            var solutionName = Path.GetFileNameWithoutExtension(this.dte.Solution.FileName);
+            logger.LogInfo($"Launching command {guid}|{commandId} ({solutionName}|{PathUtils.MakeRelative(Environment.CurrentDirectory, this.dte.Solution.FileName)})");
+            logger.DebugInfo($"Command arguments [Timeout: {timeout}] {commandArgs}");
+            try
+            {
+                var evt = new ManualResetEventSlim();
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    this.dte.Commands.Raise(guid, commandId, ref args1, ref args2);
+                    logger.DebugInfo($"Command successfully executed. [Out: {args2}]");
+                    evt.Set();
+                }, null);
+                if(!evt.Wait(timeout ?? Timeout.InfiniteTimeSpan))
+                {
+                    throw new TimeoutException();
+                }
+            }
+            catch (Exception ex)
+            when (ex is not TimeoutException)
+            {
+                logger.LogError(ex, $"Error executing command: {ex.Message}");
+                throw;
+            }
+            //this.dte.ExecuteCommand("GoogleRemoteTestAdapter.LaunchDebugger", commandArgs ?? string.Empty);
+            return args2 is null ? default : (T)args2;
+        }
+
         internal IVsHierarchy GetVsProject(string uniqueName)
         {
             var solution = this.serviceProvider.GetService<IVsSolution>();
-            IVsHierarchy result;
             if (ErrorHandler.Failed(solution
-                .GetProjectOfUniqueName(uniqueName, out result)))
+                .GetProjectOfUniqueName(uniqueName, out var result)))
             {
                 this.logger.DebugError($"Failed to get IVsHierarchy for project {uniqueName}");
             }
             return result;
+        }
+
+        [MemberNotNull(nameof(s_joinableTaskFactory))]
+        internal static void CreateLocalTaskFactory()
+        {
+#pragma warning disable VSSDK005 // Avoid instantiating JoinableTaskContext
+            var context = new JoinableTaskContext();
+#pragma warning restore VSSDK005 // Avoid instantiating JoinableTaskContext
+            s_joinableTaskFactory = new JoinableTaskFactory(context);
         }
     }
 }

@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
+		<Target Name="_EnsureAssemblyOriginatorKeyFile"
+						BeforeTargets="ResolveKeySource"
+						Condition="'$(SignAssembly)'=='true' AND '$(AssemblyOriginatorKeyFile)'==''">
+				<PropertyGroup>
+						<AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)Keys\Key_$(Configuration).snk</AssemblyOriginatorKeyFile>
+				</PropertyGroup>
+		</Target>
+		<ItemGroup>
+				<PackageReference Update="Microsoft.Extensions.Logging*"
+													Version="6.*"/>
+		</ItemGroup>
+
+		<Import Project="$([MSBuild]::GetPathOfFileAbove('LocalProjects.targets', '$(MSBuildThisFileDirectory)/..'))"
+						Condition="Exists($([MSBuild]::GetPathOfFileAbove('LocalProjects.targets', '$(MSBuildThisFileDirectory)/..')))"
+						/>
 </Project>
 

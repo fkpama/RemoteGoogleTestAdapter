@@ -1,75 +1,61 @@
 ﻿using System.Globalization;
 using GoogleTestAdapter.Framework;
-using GTestAdapter.Core;
-using GTestAdapter.Core.Binary;
-using GTestAdapter.Core.Settings;
+using GoogleTestAdapter.Remote.Adapter.Framework;
+using GoogleTestAdapter.Remote.Adapter.Utils;
+using GoogleTestAdapter.Remote.Adapter.VisualStudio;
+using GoogleTestAdapter.Remote.Discovery;
+using GoogleTestAdapter.Remote.Remoting;
+using GoogleTestAdapter.Remote.Settings;
+using GoogleTestAdapter.Remote.Symbols;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
-using RemoteGoogleTestAdapter.Framework;
-using RemoteGoogleTestAdapter.IDE;
-using RemoteGoogleTestAdapter.Logging;
-using RemoteGoogleTestAdapter.Settings;
-using RemoteGoogleTestAdapter.Utils;
-using RemoteGoogleTestAdapter.VisualStudio;
 
-namespace RemoteGoogleTestAdapter
+namespace GoogleTestAdapter.Remote.Adapter
 {
 
     //[FileExtension("")]
     //[FileExtension(".out")]
     [DefaultExecutorUri(TestExecutor.ExecutorUri)]
-    public class TestDiscoverer : ITestDiscoverer
+    public sealed class TestDiscoverer : ITestDiscoverer, IInternalTestDiscoverer
     {
+        private const AdapterMode mode = AdapterMode.Discovery;
+
+        public TestDiscoverer()
+        {
+        }
+
         void ITestDiscoverer.DiscoverTests(IEnumerable<string> sources,
                                            IDiscoveryContext discoveryContext,
                                            IMessageLogger messageLogger,
                                            ITestCaseDiscoverySink discoverySink)
         {
-            VsTestFrameworkAdapterSettings settings = null!;
-            var logger = new VsTestFrameworkLogger(messageLogger,
-                () => settings!.DebugMode,
-                () => settings!.TimestampOutput);
-            settings = new VsTestFrameworkAdapterSettings(discoveryContext?.RunSettings, logger);
-            if (settings.DebugMode)
-                AdapterUtils.WaitForDebugger(logger);
-            var loggerFactory = new VsTestFrameworkLoggerFactory(messageLogger);
-            logger.LogInfo(Resources.TestDiscoveryStarting);
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            CancellationToken cancellationToken = CancellationToken.None;
-
+            AdapterSettings? settings = null;
+            ILogger? logger = null;
             try
             {
-                string? overrideSource = settings.OverrideSource;
-                if (!string.IsNullOrWhiteSpace(overrideSource))
-                {
-                    logger.LogInfo($"Overriding test source discovery: {settings.OverrideSource}");
-                    var original = sources.FirstOrDefault();
-                    Assumes.NotNullOrEmpty(overrideSource);
-                    sources = new[] { overrideSource };
-                    overrideSource = original;
-                }
+                AdapterUtils.Initialize(discoveryContext,
+                                        out settings,
+                                        messageLogger,
+                                        out logger,
+                                        out var loggerFactory);
+                if (settings.DebugMode)
+                    AdapterUtils.WaitForDebugger(mode, logger);
 
-                var process = VsVersionUtils.GetVisualStudioProcess(logger);
-                ISourceDeployment sourceDeployment = null!;
-                if (process is not null
-                    && VsIde.TryGetInstance(process.Id, logger, out var vsIde))
-                {
-                    Assumes.NotNull(vsIde);
-                    sourceDeployment = new VsSourceDeployment(vsIde,
-                                                              settings,
-                                                              loggerFactory.CreateLogger<VsSourceDeployment>());
-                }
-                else
-                {
-                    var client = getSshClient(cancellationToken);
-                    sourceDeployment = new SourceDeployment(client, loggerFactory);
-                }
+                sources = AdapterUtils.GetSources(sources,
+                                                  settings,
+                                                  out var originalSource,
+                                                  logger);
+                logger.LogInfo(string.Format(Resources.TestDiscoveryStarting, settings.CollectSourceInformation ? " (Source infos: true)" : null));
+                CancellationToken cancellationToken = CancellationToken.None;
 
-                Assumes.NotNull(sourceDeployment);
+                var sourceDeployment = VsVersionUtils
+                    .GetDeployment(settings,
+                                   logger,
+                                   loggerFactory,
+                                   cancellationToken);
 
-                var reporter = new VsTestFrameworkReporter(discoverySink, overrideSource);
+                var reporter = new VsTestDiscoveryReporter(discoverySink, originalSource);
                 var resolver = settings.CollectSourceInformation
                 ? new TestLocationResolver(sourceDeployment, loggerFactory.CreateLogger<TestLocationResolver>())
                 : null;
@@ -80,84 +66,100 @@ namespace RemoteGoogleTestAdapter
                                    sourceDeployment,
                                    reporter,
                                    resolver,
-                                   loggerFactory)
+                                   //loggerFactory,
+                                   logger,
+                                   cancellationToken)
                     .GetAwaiter()
                     .GetResult();
 #pragma warning restore VSTHRD002 // Avoid problematic synchronous waits
 
-                stopwatch.Stop();
-                logger.LogInfo(string.Format(CultureInfo.CurrentUICulture,
-                                                      Resources.TestDiscoveryCompleted,
-                                                      stopwatch.Elapsed));
             }
             catch (Exception ex)
             {
-                logger.LogError(string.Format(CultureInfo.CurrentUICulture,
+                var msg1 = string.Format(CultureInfo.CurrentUICulture,
                                                       Resources.TestDiscoveryExceptionError,
-                                                      ex));
+                                                      ex);
+                messageLogger.SendMessage(TestMessageLevel.Error, $"{msg1}\n{ex}");
+            }
+            finally
+            {
+                settings?.ExecuteCleanups(logger);
             }
         }
         public Task DiscoverTestsAsync(IEnumerable<string> sources,
                                        AdapterSettings settings,
                                        ISourceDeployment deployment,
                                        ITestFrameworkReporter reporter,
-                                       ILoggerFactory? loggerFactory = null)
+                                       ILogger log,
+                                       CancellationToken cancellationToken = default)
             => DiscoverTestsAsync(sources,
                                   settings,
                                   deployment,
                                   reporter,
                                   new TestLocationResolver(deployment),
-                                  loggerFactory.Safe());
+                                  //loggerFactory.Safe(),
+                                  log,
+                                  cancellationToken);
+
+        ICollection<TestCase> IInternalTestDiscoverer.DiscoverTests(
+            IEnumerable<string> sources,
+            AdapterSettings settings,
+            ISourceDeployment deployment,
+            //ILoggerFactory? loggerFactory,
+            ILogger log,
+            CancellationToken cancellationToken)
+        {
+            var collection = new TestCaseDiscoveryCollector();
+            ITestLocationResolver? testLocationResolver = settings.CollectSourceInformation
+                ? new TestLocationResolver(deployment)
+                : null;
+            VsIde.JoinableTaskFactory.Run(() => DiscoverTestsAsync(sources,
+                                  settings,
+                                  deployment,
+                                  collection,
+                                  testLocationResolver,
+                                  log,
+                                  cancellationToken));
+            return collection.Tests;
+        }
         public async Task DiscoverTestsAsync(IEnumerable<string> sources,
                                              AdapterSettings settings,
                                              ISourceDeployment deployment,
                                              ITestFrameworkReporter reporter,
                                              ITestLocationResolver? testLocationResolver,
-                                             ILoggerFactory loggerFactory)
+                                             //ILoggerFactory loggerFactory,
+                                             ILogger log,
+                                             CancellationToken cancellationToken)
         {
             var tasks = new List<Task>();
-            CancellationToken cancellationToken = default;
             foreach (var source in sources)
             {
                 tasks.Add(createDiscoveryContextAsync(source,
                                                       deployment,
-                                                      settings,
                                                       reporter,
                                                       testLocationResolver,
-                                                      loggerFactory,
+                                                      log,
                                                       cancellationToken));
             }
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
-        private ISshClient getSshClient(CancellationToken cancellationToken)
-        {
-            var client = ConnectionFactory.CreateClient(VsIde.JoinableTaskFactory, cancellationToken);
-            return client;
-        }
-
         private async Task createDiscoveryContextAsync(
             string source,
             ISourceDeployment deployment,
-            AdapterSettings settings,
             ITestFrameworkReporter reporter,
             ITestLocationResolver? locationResolver,
-            ILoggerFactory factory,
+            //ILoggerFactory factory,
+            ILogger log,
             CancellationToken cancellationToken)
         {
             if (deployment.IsGoogleTestBinary(source, out var binary))
             {
                 Assumes.NotNull(binary);
-                var discovery = new TestDiscoveryContext(binary,
-                                                         source,
-                                                         settings,
-                                                         reporter,
-                                                         factory.CreateLogger<TestDiscoveryContext>());
-                var provider = new TestProvider(deployment,
-                                                binary,
-                                                source,
-                                                factory.CreateLogger<TestProvider>());
+                var discovery = new TestDiscoveryContext(source, reporter, log);
+                var provider = new TestProvider(deployment, binary, source, log);
+                                                //factory.CreateLogger<TestProvider>());
                 try
                 {
                     await discovery.DiscoverTests(provider,
@@ -165,11 +167,9 @@ namespace RemoteGoogleTestAdapter
                                                   cancellationToken)
                         .ConfigureAwait(false);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    factory
-                        .CreateLogger<TestDiscoverer>()
-                        .LogError(ex, "Test discovery error: {msg}", ex.Message);
+                    log.LogError(ex, $"Test discovery error: {ex.Message}");
                 }
             }
         }
