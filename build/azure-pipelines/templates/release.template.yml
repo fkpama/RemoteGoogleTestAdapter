@@ -7,14 +7,16 @@ resources:
 
 parameters:
   - name: PublishToMarketPlace
-    displayName: Publish To Marketplace
     type: boolean
     default: false
 
   - name: PublishToOpenVsixGallery
-    displayName: Publish To OpenVsix gallery
     type: boolean
     default: false
+  
+  - name: Version
+    type: string
+    default:
 
 variables:
   - group: VS_MarketPlace
@@ -77,6 +79,7 @@ steps:
 - template: Pipelines/vsix-incrementversion-template.yml@BuildTools
   parameters:
     SourceManifest: $(VsPackage.ProjectDirectory)\source.extension.vsixmanifest
+    Version: Version
 
 - task: PowerShell@2
   displayName: Prepare Build Environment
