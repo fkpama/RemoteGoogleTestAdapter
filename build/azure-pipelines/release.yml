@@ -14,7 +14,7 @@ parameters:
 
 - name: Version
   displayName: Version
-  default: ''
+  default: '*'
 
 pool:
   vmImage: windows-2022
@@ -22,7 +22,8 @@ pool:
 extends:
   template: templates/release.template.yml
   parameters:
-    Version: ${{ parameters.Version }}
+    ${{ if ne(parameters.Version, '*') }}:
+      Version: ${{ parameters.Version }}
     ${{ if or(parameters.PublishToMarketPlace, eq(variables['Build.SourceBranchName'], 'master')) }}:
       PublishToMarketPlace: true
     ${{ else }}:
