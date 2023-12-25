@@ -125,10 +125,7 @@ steps:
     MarketPlace.Overview: "$(VsPackage.ProjectDirectory)/overview.md"
     MarketPlace.AdditionalCommandLine:
     MarketPlace.Categories:
-      visualstudioextensions
       testing
-      coding
-      build
 
 - template: Pipelines/vsix-updatebuildname-template.yml@BuildTools
   parameters:
