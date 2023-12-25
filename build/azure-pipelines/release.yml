@@ -8,6 +8,7 @@ trigger:
       - src
 parameters:
 - name: PublishToMarketPlace
+  type: boolean
   displayName: Publish to MarketPlace
   default: false
 
