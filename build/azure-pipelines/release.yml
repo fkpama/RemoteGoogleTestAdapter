@@ -14,7 +14,7 @@ parameters:
 
 - name: Version
   displayName: Version
-  default:
+  default: ''
 
 pool:
   vmImage: windows-2022
