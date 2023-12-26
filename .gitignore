@@ -368,3 +368,7 @@ Keys/
 
 /LocalProjects.targets
 /src/RemoteGoogleTestAdapter/Properties/launchSettings.json
+
+/src/DebugEngine
+*.cmd
+*.bak
