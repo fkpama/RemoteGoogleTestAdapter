@@ -40,10 +40,12 @@ namespace GoogleTestAdapter.Remote.Adapter
 
         public static void SetDeploymentProperty(this VsTestCase testCase,
                                                int connectionId,
-                                               string? remoteExePath)
+                                               string? remoteExePath,
+                                               TestMethodDescriptorFlags flags)
         {
             var property = new TestCaseDeploymentProperty(connectionId,
-                remoteExePath);
+                                                          remoteExePath,
+                                                          flags);
             property.SetValue(TestDeploymentMetaDataProperty, testCase);
         }
 

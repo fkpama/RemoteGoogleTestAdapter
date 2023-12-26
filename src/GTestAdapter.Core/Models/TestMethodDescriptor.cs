@@ -1,5 +1,4 @@
-﻿using GoogleTestAdapter.Model;
-using GoogleTestAdapter.Remote.Models;
+﻿using GoogleTestAdapter.Remote.Models;
 using Sodiware.Unix.DebugLibrary;
 
 namespace GTestAdapter.Core.Models
@@ -15,6 +14,7 @@ namespace GTestAdapter.Core.Models
         public TestCaseDescriptor TestCase { get; }
         public int TotalTestsInSuite { get; }
         public int TotalTestInExe { get; }
+        public TestMethodDescriptorFlags Flags { get; }
 
         public TestMethodDescriptor(ElfDebugBinary file,
                                     TestCaseDescriptor testCase,
@@ -24,7 +24,8 @@ namespace GTestAdapter.Core.Models
                                     int connectionId,
                                     string? remoteExePath,
                                     int totalTestsInSuite,
-                                    int totalTestInExe)
+                                    int totalTestInExe,
+                                    TestMethodDescriptorFlags flags = 0)
         {
             this.File = Guard.NotNull(file);
             this.TestCase = testCase;
@@ -35,6 +36,7 @@ namespace GTestAdapter.Core.Models
             this.ConnectionId = connectionId;
             this.RemoteExePath = remoteExePath;
             this.SourceFile = Guard.NotNullOrWhitespace(sourceFile);
+            this.Flags = flags;
         }
     }
 }

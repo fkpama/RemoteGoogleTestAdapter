@@ -26,7 +26,7 @@ namespace GTestAdapter.Core.Tests
             var uri = new Uri(TestExecutor.ExecutorUri);
             var testCase = new VsTestCase("SomeName.SomeTest", uri, "source");
             testCase.SetMetadataProperty(1, 1, "SomeName.SomeTest");
-            testCase.SetDeploymentProperty(0, "/some/path");
+            testCase.SetDeploymentProperty(0, "/some/path", 0);
             var mockContext = new Mock<IRunContext>();
             var handle = new Mock<IFrameworkHandle>();
             sut.RunTests(new[] { testCase }, mockContext.Object,

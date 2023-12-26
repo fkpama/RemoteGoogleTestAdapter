@@ -145,7 +145,7 @@ namespace GoogleTestAdapter.Remote.Adapter.Settings
             return node?.Value;
         }
 
-        public bool IsVisualStudioBackgroundDiscovery
+        public override bool IsVisualStudioBackgroundDiscovery
         {
             get
             {

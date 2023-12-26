@@ -30,6 +30,7 @@ namespace GoogleTestAdapter.Remote.Adapter.VisualStudio
                                                            ElfDebugBinary binary,
                                                            CancellationToken cancellationToken)
         {
+            var flags = TestMethodDescriptorFlags.ExternalDeployment;
             var project = this.vsIde
                 .GetProjectForOutputPath(filePath,
                                          this.settings.OverrideSource.IsPresent());
@@ -45,7 +46,7 @@ namespace GoogleTestAdapter.Remote.Adapter.VisualStudio
                     Assumes.NotNull(targetPath);
                     var ar = output.Trim().Split(AdapterUtils.LineSeparatorChars,
                                            StringSplitOptions.RemoveEmptyEntries);
-                    return new(connectionId, targetPath, ar);
+                    return new(connectionId, targetPath, ar, flags);
                 }
             }
 

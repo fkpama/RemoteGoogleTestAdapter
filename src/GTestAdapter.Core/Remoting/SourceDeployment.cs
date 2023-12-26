@@ -6,6 +6,7 @@ using PathHelper = Sodiware.IO.PathUtils;
 using Microsoft.Extensions.Logging;
 using Sodiware.Unix.DebugLibrary;
 using ILogger = GoogleTestAdapter.Common.ILogger;
+using GTestAdapter.Core.Models;
 
 namespace GoogleTestAdapter.Remote.Remoting
 {
@@ -75,52 +76,85 @@ namespace GoogleTestAdapter.Remote.Remoting
                 .ConfigureAwait(false);
 
             var target = this.settings.Connections?.Find(x => PathHelper.IsSamePath(filePath, x.TargetPath));
+            TestMethodDescriptorFlags flags = 0;
             if (target is not null)
             {
+                flags = TestMethodDescriptorFlags.ExternalDeployment;
                 try
                 {
-                    var remoteTimeStamp = await client.GetLastWriteTimeAsync(target.RemotePath, cancellationToken).NoAwait();
-                    var localTime = PathHelper.GetLastWriteTime(filePath);
-                    if (remoteTimeStamp >= localTime)
+                    var upToDate = target.UpToDate;
+                    if (!upToDate)
+                    {
+                        var remoteTimeStamp = await client.GetLastWriteTimeAsync(target.RemotePath, cancellationToken).NoAwait();
+                        var localTime = PathHelper.GetLastWriteTime(filePath);
+                        upToDate = remoteTimeStamp >= localTime; 
+                    }
+                    if (upToDate)
                     {
                         var outputs = await getListTestCommandOutput(target.RemotePath,
                                                          client,
                                                          cancellationToken)
                             .ConfigureAwait(false);
 
-                        return new(client.ConnectionId, target.RemotePath, outputs);
+                        return new(client.ConnectionId,
+                                   target.RemotePath,
+                                   outputs,
+                                   flags);
                     }
                 }
                 catch (System.IO.IOException) { }
             }
-            var dir = Guid.NewGuid().ToString("N").Substring(0, 8);
-            dir = PathUtils.CombineUnixPaths(this.settings.RemoteDeploymentDirectory, dir);
 
-            log.DebugInfo($"Using remote deployment directory: {dir}");
-            await client.RunCommandAsync(cancellationToken, "mkdir", "-p", dir)
-                .ConfigureAwait(false);
+            string dir;
+            if (target is not null)
+            {
+                dir = PathUtils.GetDirectoryName(target.RemotePath);
+            }
+            else
+            {
+                dir = Guid.NewGuid().ToString("N").Substring(0, 8);
+                dir = PathUtils.CombineUnixPaths(this.settings.RemoteDeploymentDirectory, dir);
+            }
+
             try
             {
-                return await getListTestOutputAsync(dir,
-                                                    filePath,
-                                                    binary,
-                                                    client,
-                                                    cancellationToken);
+                string exePath;
+                if (target is null)
+                {
+                    log.DebugInfo($"Using remote deployment directory: {dir}");
+                    flags = TestMethodDescriptorFlags.DeleteDirectory;
+                    await client.RunCommandAsync(cancellationToken, "mkdir", "-p", dir).NoAwait();
+                    exePath = await deployTargetAsync(dir,
+                                                      filePath,
+                                                      binary,
+                                                      client,
+                                                      cancellationToken).NoAwait();
+                }
+                else
+                {
+                    exePath = target.RemotePath;
+                }
+                var outputs = await getListTestCommandOutput(exePath,
+                                                             client,
+                                                             cancellationToken).NoAwait();
+
+                return new(client.ConnectionId, exePath, outputs, flags);
             }
             finally
             {
-                if (this.settings.DiscoveryMode != AdapterMode.Execution)
+                if (this.settings.DiscoveryMode != AdapterMode.Execution
+                    && !settings.IsRunningInsideVisualStudio)
                 {
                     try
                     {
-                        await deleteDirectory().ConfigureAwait(false);
+                        await deleteDirectory().NoAwait();
                     }
                     catch (Exception e)
                     {
                         log.LogWarning($"Failed to remove deployment directory: {dir}\n{e}");
                     }
                 }
-                else
+                else if (!settings.IsVisualStudioBackgroundDiscovery)
                 {
                     this.settings.AddCleanup(deleteDirectory);
                 }
@@ -137,11 +171,11 @@ namespace GoogleTestAdapter.Remote.Remoting
                 }
             }
         }
-        private async Task<TestListResult> getListTestOutputAsync(string dir,
-                                                            string filePath,
-                                                            ElfDebugBinary binary,
-                                                            ISshClient client,
-                                                            CancellationToken cancellationToken)
+        private async Task<string> deployTargetAsync(string dir,
+                                                     string filePath,
+                                                     ElfDebugBinary binary,
+                                                     ISshClient client,
+                                                     CancellationToken cancellationToken)
         {
             var mappings = getDependenciesToUpload(dir, filePath, binary);
             var exePath = PathUtils.CombineUnixPaths(dir, Path.GetFileName(filePath));
@@ -155,13 +189,8 @@ namespace GoogleTestAdapter.Remote.Remoting
             await client.RunCommandAsync(cancellationToken,
                                          "chmod",
                                          "+x",
-                                         exePath);
-            var outputs = await getListTestCommandOutput(exePath,
-                                                         client,
-                                                         cancellationToken)
-                .ConfigureAwait(false);
-
-            return new(client.ConnectionId, exePath, outputs);
+                                         exePath).NoAwait();
+            return exePath;
         }
 
         private async Task<string[]> getListTestCommandOutput(string exePath,
