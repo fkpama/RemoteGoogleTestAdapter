@@ -41,15 +41,16 @@ namespace GoogleTestAdapter.Remote
             var result = await this.deployment
                 .GetTestListOutputAsync(this.filePath,
                                         this.binary,
-                                        cancellationToken);
+                                        cancellationToken).NoAwait();
             var outputs = result.Outputs;
             var t1 = Task.Run(() => new ListTestsParser(this.testNameSeparator)
                 .ParseListTestsOutput(outputs));
             var t2 = Task.Run(() => new ListTestMetadataParser()
                 .ParseTestListOutput(outputs));
-            await Task.WhenAll(t1, t2).ConfigureAwait(false);
+            await Task.WhenAll(t1, t2).NoAwait();
             var testCases = t1.Result;
             var metadatas = t2.Result;
+            var flags = result.Flags;
 
             foreach (var testCase in testCases)
             {
@@ -66,7 +67,8 @@ namespace GoogleTestAdapter.Remote
                                                      result.ConnectionId,
                                                      result.RemotePath,
                                                      nbTestInSuite,
-                                                     metadatas.TotalTestInExe);
+                                                     metadatas.TotalTestInExe,
+                                                     flags);
                 this.OnTestMethod?.Invoke(this, new(tcase));
             }
             return testCases;

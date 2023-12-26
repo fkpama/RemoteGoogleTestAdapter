@@ -19,6 +19,7 @@
         public virtual TimeSpan TestDiscoveryTimeout { get; }
         public virtual bool IsRunningInsideVisualStudio { get; }
         public virtual bool IsBeingDebugged { get; }
+        public virtual bool IsVisualStudioBackgroundDiscovery { get; }
         public virtual string RemoteDeploymentDirectory { get; } = "/tmp";
         public virtual bool TimestampOutput { get; } = true;
         public AdapterMode DiscoveryMode { get; set; } = AdapterMode.Discovery;

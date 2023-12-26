@@ -1,6 +1,4 @@
-﻿using GoogleTestAdapter.Model;
-
-namespace GoogleTestAdapter.Remote.Models
+﻿namespace GoogleTestAdapter.Remote.Models
 {
     public sealed class TestCaseDeploymentProperty : TestProperty
     {
@@ -8,10 +6,11 @@ namespace GoogleTestAdapter.Remote.Models
         public readonly static string Label = "test case deployment metadata";
         public int ConnectionId { get; }
         public string? RemoteExePath { get; }
+        public TestMethodDescriptorFlags Flags { get; }
         public TestCaseDeploymentProperty(TestListResult result)
-            : this(result.ConnectionId, result.RemotePath) { }
-        public TestCaseDeploymentProperty(int connectionId, string? remotePath)
-            : base(serialize(connectionId, remotePath))
+            : this(result.ConnectionId, result.RemotePath, result.Flags) { }
+        public TestCaseDeploymentProperty(int connectionId, string? remotePath, TestMethodDescriptorFlags flags)
+            : base(serialize(connectionId, remotePath, flags))
         {
             this.RemoteExePath = remotePath;
             this.ConnectionId = connectionId;
@@ -20,21 +19,20 @@ namespace GoogleTestAdapter.Remote.Models
         public static TestCaseDeploymentProperty Parse(string s)
         {
             var items = s.Split(new char[]{ '|' }, StringSplitOptions.RemoveEmptyEntries);
-            int connectionId = 0;
-            string? remoteExePath = null;
-            if (items.Length > 0)
-            {
-                connectionId = int.Parse(items[0]);
-            }
+            var connectionId = int.Parse(items[0]);
+            var remoteExePath = items[1];
+            TestMethodDescriptorFlags flags = 0;
             if (items.Length > 1)
             {
-                remoteExePath = items[1];
+                var val = items[2];
+                if (int.TryParse(val, out var ival))
+                    flags = (TestMethodDescriptorFlags)ival;
             }
-            return new(connectionId, remoteExePath);
+            return new(connectionId, remoteExePath, flags);
 
         }
 
-        private static string serialize(int connectionId, string? remotePath)
-            => $"|{connectionId}|{remotePath}|";
+        private static string serialize(int connectionId, string? remotePath, TestMethodDescriptorFlags flags)
+            => $"|{connectionId}|{remotePath}{(flags != 0 ? $"|{(int)flags}" : null)}|";
     }
 }

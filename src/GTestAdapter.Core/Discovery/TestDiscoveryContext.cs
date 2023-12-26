@@ -98,7 +98,8 @@ namespace GoogleTestAdapter.Remote.Discovery
                                                         descriptor.TotalTestInExe,
                                                         testCase.FullyQualifiedName);
             var deploymentMetadata = new TestCaseDeploymentProperty(descriptor.ConnectionId,
-                descriptor.RemoteExePath);
+                                                                    descriptor.RemoteExePath,
+                                                                    descriptor.Flags);
             testCase.Properties.Add(metadata);
             testCase.Properties.Add(deploymentMetadata);
 
