@@ -79,10 +79,6 @@ steps:
   submodules: recursive
   clean: true
 
-- template: Pipelines/wsl-distrib-install.yml@BuildTools
-  parameters:
-    InitScriptPath: $(SourcesDirectory)/build/install_debug_env.sh
-
 - task: DownloadSecureFile@1
   displayName: Download Key
   inputs:
