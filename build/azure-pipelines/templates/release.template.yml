@@ -37,7 +37,7 @@ variables:
 
   - name: UnitTestsProjects
     value: |
-      $(SourcesDirectory)src\Tests\*Tests.csproj
+      $(SourcesDirectory)src\Tests\**\*Tests.csproj
 
   - name: VsPackage.ProjectDirectory
     value: $(SourcesDirectory)src\VisualStudio\VsPackage
