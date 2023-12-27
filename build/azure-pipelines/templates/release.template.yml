@@ -79,6 +79,10 @@ steps:
   submodules: recursive
   clean: true
 
+- template: Pipelines/wsl-distrib-install.yml@BuildTools
+  parameters:
+    InitScriptPath: $(SourcesDirectory)/build/install_debug_env.sh
+
 - task: DownloadSecureFile@1
   displayName: Download Key
   inputs:
@@ -105,6 +109,8 @@ steps:
 
       echo "##[command]copy '$(Agent.TempDirectory)\$(CodeSigningKey)' '$(SourcesDirectory)Keys\key_$(BuildConfiguration).snk'"
       Copy-Item -Path "$(Agent.TempDirectory)\$(CodeSigningKey)" -Destination "$(SourcesDirectory)Keys\key_$(BuildConfiguration).snk" | Out-Null
+
+      # For Unit tests
       Copy-Item -Path "$(Agent.TempDirectory)\$(CodeSigningKey)" -Destination "$(SourcesDirectory)Keys\key_Debug.snk" -Force | Out-Null
 
       New-PipelineVariable SigningKeyFile "$(SourcesDirectory)Keys\key_$(BuildConfiguration).snk"
