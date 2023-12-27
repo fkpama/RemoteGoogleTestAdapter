@@ -31,12 +31,15 @@ variables:
     value: $(Build.SourcesDirectory)/BuildTools/Scripts/
 
   - name: NetCoreProjects
+    readonly: true
     value: |
       $(SourcesDirectory)src\RemoteGoogleTestAdapter\*.csproj
       $(SourcesDirectory)src\VisualStudio\VsPackage.Debugger\*.csproj
 
   - name: UnitTestsProjects
-    value: '$(SourcesDirectory)src\Tests\**\*Tests.csproj'
+    readonly: true
+    value: |
+        $(SourcesDirectory)src\Tests\**\*Tests.csproj
 
   - name: VsPackage.ProjectDirectory
     value: $(SourcesDirectory)src\VisualStudio\VsPackage
