@@ -44,6 +44,7 @@ namespace GTestAdapter.Core.Tests
                            settings,
                            sourceDeployment.Object,
                            executorProvider.Object,
+                           Enumerable.Empty<ITestOutputFilter>(),
                            logger.Object);
         }
 

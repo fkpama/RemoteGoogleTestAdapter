@@ -42,7 +42,7 @@ namespace GTestAdapter.Core.Tests
                 //var info = ExceptionDispatchInfo.Capture(raisedEx);
                 throw raisedEx;
             }
-            Assert.True(ok); ;
+            Assert.That(ok); ;
             return t;
         }
         [Test]
