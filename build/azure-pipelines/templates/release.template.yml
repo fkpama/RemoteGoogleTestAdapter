@@ -36,8 +36,7 @@ variables:
       $(SourcesDirectory)src\VisualStudio\VsPackage.Debugger\*.csproj
 
   - name: UnitTestsProjects
-    value: |
-      $(SourcesDirectory)src\Tests\**\*Tests.csproj
+    value: $(SourcesDirectory)src\Tests\**\*Tests.csproj
 
   - name: VsPackage.ProjectDirectory
     value: $(SourcesDirectory)src\VisualStudio\VsPackage
@@ -131,7 +130,6 @@ steps:
     #SourcesDirectory: $(SourcesDirectory)
     VsixCompile.ProjectPath: $(VsPackage.ProjectPath)
     netCoreProjects: $(NetCoreProjects)
-    UnitTestsProjects: $(UnitTestsProjects)
     VsixCompile.SigningKeyFile: $(SigningKeyFile)
     PublishToMarketPlace: ${{ parameters.PublishToMarketplace }}
     PublishToOpenVsixGallery: ${{ parameters.PublishToOpenVsixGallery }}
@@ -141,6 +139,7 @@ steps:
     MarketPlace.AdditionalCommandLine:
     MarketPlace.Categories:
       testing
+    UnitTestsProjects: $(UnitTestsProjects)
     beforeUnitTestsRun:
       - task: PowerShell@2
         displayName: Generate WSL Install script
