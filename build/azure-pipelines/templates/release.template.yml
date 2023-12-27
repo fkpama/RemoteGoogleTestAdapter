@@ -35,6 +35,10 @@ variables:
       $(SourcesDirectory)src\RemoteGoogleTestAdapter\*.csproj
       $(SourcesDirectory)src\VisualStudio\VsPackage.Debugger\*.csproj
 
+  - name: UnitTestsProjects
+    value: |
+      $(SourcesDirectory)src\Tests\*Tests.csproj
+
   - name: VsPackage.ProjectDirectory
     value: $(SourcesDirectory)src\VisualStudio\VsPackage
   
@@ -128,6 +132,7 @@ steps:
     #SourcesDirectory: $(SourcesDirectory)
     VsixCompile.ProjectPath: $(VsPackage.ProjectPath)
     netCoreProjects: $(NetCoreProjects)
+    unitTestsProjects: $(UnitTestsProjects)
     VsixCompile.SigningKeyFile: $(SigningKeyFile)
     PublishToMarketPlace: ${{ parameters.PublishToMarketplace }}
     PublishToOpenVsixGallery: ${{ parameters.PublishToOpenVsixGallery }}
