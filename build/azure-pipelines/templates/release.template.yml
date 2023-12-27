@@ -20,6 +20,7 @@ parameters:
 
 variables:
   - group: VS_MarketPlace
+  - group: GitHub
 
   - name: SourcesDirectory
     readonly: true
