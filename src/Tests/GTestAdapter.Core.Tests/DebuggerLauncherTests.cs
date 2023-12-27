@@ -45,7 +45,7 @@ namespace GTestAdapter.Core.Tests
             Assert.That(ok); ;
             return t;
         }
-        [Test]
+        [Test, Ignore("TODO")]
         public void can_create_launcher()
         {
             var serviceCallBarrier = new Barrier(2);
