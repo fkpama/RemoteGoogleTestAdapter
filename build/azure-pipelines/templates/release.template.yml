@@ -70,10 +70,12 @@ steps:
 
 - checkout: self
   persistCredentials: true
-  fetchDepth: 0
+  #fetchDepth: 0
   fetchTags: true
   submodules: recursive
   clean: true
+
+- template: Pipelines/wsl-distrib-install.yml@BuildTools
 
 - task: DownloadSecureFile@1
   displayName: Download Key
