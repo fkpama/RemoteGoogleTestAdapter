@@ -1,5 +1,6 @@
-export DEBIAN_FRONTEND=noninteractive
+#!/bin/bash -x
 
+export DEBIAN_FRONTEND=noninteractive
 apt-get update && \
 	apt-get install -qy openssh-server g++ binutils \
 			   libgtest-dev \
