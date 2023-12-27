@@ -74,7 +74,7 @@ steps:
 
 - checkout: self
   persistCredentials: true
-  #fetchDepth: 0
+  fetchDepth: 0
   fetchTags: true
   submodules: recursive
   clean: true
