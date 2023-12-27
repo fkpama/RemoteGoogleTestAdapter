@@ -20,6 +20,7 @@ parameters:
 
 variables:
   - group: VS_MarketPlace
+  - group: GitHub
 
   - name: SourcesDirectory
     readonly: true
@@ -58,6 +59,10 @@ variables:
   - name: TagPrefix
     readonly: true
     value: v
+
+  - ${{ if eq(variables['Build.Repository.Provider'], 'GitHub') }}:
+    - group: GitHub
+
 
 steps:
 
@@ -112,17 +117,14 @@ steps:
 
       exit 0
 
-- ${{ if eq(variables['Build.Reason'], 'Build.Reason') }}:
-  - template: Pipelines/github-update-pr-status.yml@BuildTools
-
 - template: Pipelines/vsix-publish-template.yml@BuildTools
   parameters:
-    BuildToolsDirectory: $(Build.SourcesDirectory)/BuildTools
     BuildConfiguration: $(BuildConfiguration)
+    GitHubRepository: true
     #SourcesDirectory: $(SourcesDirectory)
-    Vsix.ProjectPath: $(VsPackage.ProjectPath)
+    VsixCompile.ProjectPath: $(VsPackage.ProjectPath)
     netCoreProjects: $(NetCoreProjects)
-    Vsix.SigningKeyFile: $(SigningKeyFile)
+    VsixCompile.SigningKeyFile: $(SigningKeyFile)
     PublishToMarketPlace: ${{ parameters.PublishToMarketplace }}
     PublishToOpenVsixGallery: ${{ parameters.PublishToOpenVsixGallery }}
     MarketPlace.AccessToken: $(VS_MarketPlace.AccessToken)
@@ -136,6 +138,7 @@ steps:
   parameters:
    PublishCheckVarName: Vsix.Published
    #SourcesDirectory: $(SourcesDirectory)
+   GitHubRepository: true
    PublishedToMarketPlace: ${{ parameters.PublishToMarketplace }}
    PublishedToOpenVsixGallery: ${{ parameters.PublishToOpenVsixGallery }}
    TagBuild: true

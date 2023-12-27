@@ -3,9 +3,16 @@ trigger:
     include:
       - master
       - dev
+      - refs/pull/*/merge
   paths:
     include:
       - src
+
+pr:
+  branches:
+    include:
+    - dev
+    - master
 
 parameters:
 - name: PublishToMarketPlace
