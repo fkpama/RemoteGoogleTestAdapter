@@ -78,7 +78,7 @@ steps:
     script: |
       $script = "export DEBIAN_FRONTEND=noninteractive`n"
       $script += "apt-get update && \`n"
-      $script += "apt-get install -qy \`n
+      $script += "apt-get install -qy \`n"
       $script += "        openssh-server g++ binutils \`n"
       $script += "        libgtest-dev \`n"
       $script += "        gdb rsync zip`n"
