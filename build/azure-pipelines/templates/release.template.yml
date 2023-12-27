@@ -77,7 +77,7 @@ steps:
 
 - template: Pipelines/wsl-distrib-install.yml@BuildTools
   parameters:
-    InitScriptPath: ${{ variables['SourceDirectory'] }}/build/install_debug_env.sh
+    InitScriptPath: $(SourcesDirectory)/build/install_debug_env.sh
 
 - task: DownloadSecureFile@1
   displayName: Download Key
