@@ -8,6 +8,12 @@ trigger:
     include:
       - src
 
+pr:
+  branches:
+    include:
+    - dev
+    - master
+
 parameters:
 - name: PublishToMarketPlace
   type: boolean
