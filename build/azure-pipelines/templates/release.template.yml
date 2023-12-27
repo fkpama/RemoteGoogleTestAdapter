@@ -79,10 +79,6 @@ steps:
   submodules: recursive
   clean: true
 
-- template: Pipelines/wsl-distrib-install.yml@BuildTools
-  parameters:
-    InitScriptPath: $(SourcesDirectory)/build/install_debug_env.sh
-
 - task: DownloadSecureFile@1
   displayName: Download Key
   inputs:
@@ -142,6 +138,12 @@ steps:
     MarketPlace.AdditionalCommandLine:
     MarketPlace.Categories:
       testing
+    beforeUnitTestsRun:
+      - template: Pipelines/wsl-distrib-install.yml@BuildTools
+        parameters:
+          InitScriptPath: $(SourcesDirectory)/build/install_debug_env.sh
+
+
 
 - template: Pipelines/vsix-updatebuildname-template.yml@BuildTools
   parameters:
