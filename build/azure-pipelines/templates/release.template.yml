@@ -139,7 +139,7 @@ steps:
     MarketPlace.AdditionalCommandLine:
     MarketPlace.Categories:
       testing
-    UnitTestsProjects: $(UnitTestsProjects)
+    UnitTestsProjects: ${{ variables['UnitTestsProjects'] }}
     beforeUnitTestsRun:
       - task: PowerShell@2
         displayName: Generate WSL Install script
