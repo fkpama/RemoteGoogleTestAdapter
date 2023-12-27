@@ -132,7 +132,7 @@ steps:
     #SourcesDirectory: $(SourcesDirectory)
     VsixCompile.ProjectPath: $(VsPackage.ProjectPath)
     netCoreProjects: $(NetCoreProjects)
-    unitTestsProjects: $(UnitTestsProjects)
+    UnitTestsProjects: $(UnitTestsProjects)
     VsixCompile.SigningKeyFile: $(SigningKeyFile)
     PublishToMarketPlace: ${{ parameters.PublishToMarketplace }}
     PublishToOpenVsixGallery: ${{ parameters.PublishToOpenVsixGallery }}
