@@ -138,6 +138,7 @@ steps:
   parameters:
    PublishCheckVarName: Vsix.Published
    #SourcesDirectory: $(SourcesDirectory)
+   GitHubRepository: true
    PublishedToMarketPlace: ${{ parameters.PublishToMarketplace }}
    PublishedToOpenVsixGallery: ${{ parameters.PublishToOpenVsixGallery }}
    TagBuild: true
