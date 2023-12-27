@@ -142,24 +142,24 @@ steps:
     MarketPlace.Categories:
       testing
     beforeUnitTestsRun:
-      - task: PowerShell@2
-        displayName: Generate WSL Install script
-        inputs:
-          workingDirectory: $(SourcesDirectory)
-          targetType: inline
-          script: |
-            $script = "export DEBIAN_FRONTEND=noninteractive`n"
-            $script += "apt-get update && \`n"
-            $script += "apt-get install -qy \`n"
-            $script += "        openssh-server g++ binutils \`n"
-            $script += "        libgtest-dev \`n"
-            $script += "        gdb rsync zip`n"
-            $script += "cat /etc/ssh/sshd_config"
-
-            $filePath = "$(Agent.TempDirectory)/wsl_install.sh"
-            $script | Out-File -NoNewLine -Encoding ascii $filePath
-            Write-Host "##[debug]Script:`n$(Get-Content $filePath)"
-            Write-Host "##vso[task.setvariable variable=WSL.InitScript]$filePath"
+ #      - task: PowerShell@2
+ #        displayName: Generate WSL Install script
+ #        inputs:
+ #          workingDirectory: $(SourcesDirectory)
+ #          targetType: inline
+ #          script: |
+ #            $script = "export DEBIAN_FRONTEND=noninteractive`n"
+ #            $script += "apt-get update && \`n"
+ #            $script += "apt-get install -qy \`n"
+ #            $script += "        openssh-server g++ binutils \`n"
+ #            $script += "        libgtest-dev \`n"
+ #            $script += "        gdb rsync zip`n"
+ #            $script += "cat /etc/ssh/sshd_config"
+ #
+ #            $filePath = "$(Agent.TempDirectory)/wsl_install.sh"
+ #            $script | Out-File -NoNewLine -Encoding ascii $filePath
+ #            Write-Host "##[debug]Script:`n$(Get-Content $filePath)"
+ #            Write-Host "##vso[task.setvariable variable=WSL.InitScript]$filePath"
       - template: Pipelines/wsl-distrib-install.yml@BuildTools
         parameters:
           InitScriptPath: ${{ variables['WSL.InitScript'] }}
