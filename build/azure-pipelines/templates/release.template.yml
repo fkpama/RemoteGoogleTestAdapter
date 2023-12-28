@@ -72,7 +72,14 @@ variables:
 
 steps:
 
-- checkout: BuildTools
+#- checkout: BuildTools
+
+- checkout: self
+  persistCredentials: true
+  fetchDepth: 0
+  fetchTags: true
+  submodules: recursive
+  clean: true
 
 - task: PowerShell@2
   displayName: Generate WSL Install script
@@ -80,13 +87,8 @@ steps:
     workingDirectory: $(SourcesDirectory)
     targetType: inline
     script: |
-      $script = "export DEBIAN_FRONTEND=noninteractive`n"
-      $script += "apt-get update && \`n"
-      $script += "apt-get install -qy \`n"
-      $script += "        openssh-server g++ binutils \`n"
-      $script += "        libgtest-dev \`n"
-      $script += "        gdb rsync zip`n"
-      $script += "cat /etc/ssh/sshd_config"
+      $script += "cat /etc/ssh/sshd_config`n"
+      $script += "service ssh start`n"
 
       $filePath = "$(Agent.TempDirectory)/wsl_install.sh"
       $script | Out-File -NoNewLine -Encoding ascii $filePath
@@ -96,13 +98,9 @@ steps:
 - template: Pipelines/wsl-distrib-install.yml@BuildTools
   parameters:
     InitScriptPath: $(Agent.TempDirectory)/wsl_install.sh
-
-- checkout: self
-  persistCredentials: true
-  fetchDepth: 0
-  fetchTags: true
-  submodules: recursive
-  clean: true
+    Packages: >
+      g++ gdb openssh-server binutils libgtest-dev
+      rsync zip
 
 - task: DownloadSecureFile@1
   displayName: Download Key
@@ -173,13 +171,8 @@ steps:
           workingDirectory: $(SourcesDirectory)
           targetType: inline
           script: |
-            $script = "export DEBIAN_FRONTEND=noninteractive`n"
-            $script += "apt-get update && \`n"
-            $script += "apt-get install -qy \`n"
-            $script += "        openssh-server g++ binutils \`n"
-            $script += "        libgtest-dev \`n"
-            $script += "        gdb rsync zip`n"
-            $script += "cat /etc/ssh/sshd_config"
+            $script += "cat /etc/ssh/sshd_config`n"
+            $script += "service ssh start`n"
  
             $filePath = "$(Agent.TempDirectory)/wsl_install.sh"
             $script | Out-File -NoNewLine -Encoding ascii $filePath
@@ -189,6 +182,9 @@ steps:
       - template: Pipelines/wsl-distrib-install.yml@BuildTools
         parameters:
           InitScriptPath: $(Agent.TempDirectory)/wsl_install.sh
+          Packages: >
+            g++ gdb openssh-server binutils libgtest-dev
+            rsync zip
 
 
 
