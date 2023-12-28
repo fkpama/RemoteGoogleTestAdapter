@@ -83,7 +83,6 @@ steps:
 
 - template: Pipelines/wsl-distrib-install.yml@BuildTools
   parameters:
-    InitScriptPath: $(Agent.TempDirectory)/wsl_install.sh
     Packages: >
       g++ gdb openssh-server binutils libgtest-dev
       rsync zip
