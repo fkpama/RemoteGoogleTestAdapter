@@ -72,7 +72,7 @@ variables:
 
 steps:
 
-#- checkout: BuildTools
+- checkout: BuildTools
 
 - checkout: self
   persistCredentials: true
