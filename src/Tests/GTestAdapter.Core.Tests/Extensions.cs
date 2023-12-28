@@ -84,7 +84,7 @@ namespace GTestAdapter.Core.Tests
             => HasTestListOutput(reporter, output.Split('\n'));
         internal static IReturnsResult<ISourceDeployment> HasTestListOutput(this Mock<ISourceDeployment> reporter, string[] output)
             => reporter.Setup(x => x.GetTestListOutputAsync(It.IsAny<string>(), It.IsAny<ElfDebugBinary>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new TestListResult(0, "dummy", output));
+            .ReturnsAsync(new TestListResult(0, "dummy", output, 0));
         internal static IReturnsResult<ISourceDeployment> HasTestBinary(
             this Mock<ISourceDeployment> reporter,
             string path,

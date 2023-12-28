@@ -31,9 +31,15 @@ variables:
     value: $(Build.SourcesDirectory)/BuildTools/Scripts/
 
   - name: NetCoreProjects
+    readonly: true
     value: |
       $(SourcesDirectory)src\RemoteGoogleTestAdapter\*.csproj
       $(SourcesDirectory)src\VisualStudio\VsPackage.Debugger\*.csproj
+
+  - name: UnitTestsProjects
+    readonly: true
+    value: |
+        $(SourcesDirectory)src\Tests\**\*Tests.csproj
 
   - name: VsPackage.ProjectDirectory
     value: $(SourcesDirectory)src\VisualStudio\VsPackage
@@ -102,6 +108,9 @@ steps:
       echo "##[command]copy '$(Agent.TempDirectory)\$(CodeSigningKey)' '$(SourcesDirectory)Keys\key_$(BuildConfiguration).snk'"
       Copy-Item -Path "$(Agent.TempDirectory)\$(CodeSigningKey)" -Destination "$(SourcesDirectory)Keys\key_$(BuildConfiguration).snk" | Out-Null
 
+      # For Unit tests
+      Copy-Item -Path "$(Agent.TempDirectory)\$(CodeSigningKey)" -Destination "$(SourcesDirectory)Keys\key_Debug.snk" -Force | Out-Null
+
       New-PipelineVariable SigningKeyFile "$(SourcesDirectory)Keys\key_$(BuildConfiguration).snk"
 
       echo "Removing $(SourcesDirectory)third-party\GoogleTestAdapter\Nuget.config"
@@ -133,6 +142,19 @@ steps:
     MarketPlace.AdditionalCommandLine:
     MarketPlace.Categories:
       testing
+    UnitTestsProjects: $(UnitTestsProjects)
+    beforeUnitTestsRun:
+      - template: Pipelines/wsl-distrib-install.yml@BuildTools
+        parameters:
+          Packages: >
+            g++ gdb openssh-server binutils libgtest-dev
+            rsync zip
+          InitScript: |
+              cat /etc/ssh/sshd_config
+              service ssh start
+
+
+
 
 - template: Pipelines/vsix-updatebuildname-template.yml@BuildTools
   parameters:

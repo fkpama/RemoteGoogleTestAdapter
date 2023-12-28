@@ -27,7 +27,6 @@
 		</ItemGroup>
 
 		<ItemGroup>
-				<ProjectReference Include="..\..\..\..\..\Rpc\src\Framework\src\Unix\Tests\DebugLibrary.Utils\DebugLibrary.Utils.csproj" />
 				<ProjectReference Include="..\..\GTestAdapter.Core\GTestAdapter.Core.csproj" />
 				<ProjectReference Include="..\..\RemoteGoogleTestAdapter\RemoteGoogleTestAdapter.csproj" />
 				<!--<ProjectReference Include="..\..\VisualStudio\VsPackage.Debugger\VsPackage.Debugger.csproj" />-->
