@@ -188,7 +188,7 @@ steps:
 
       - template: Pipelines/wsl-distrib-install.yml@BuildTools
         parameters:
-          InitScriptPath: ${{ variables['Agent.TempDirectory']/wsl_install.sh
+          InitScriptPath: $(Agent.TempDirectory)/wsl_install.sh
 
 
 
